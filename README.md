@@ -33,4 +33,4 @@ For more Data Insights, Business Results, check the scripts above
 * Accepting Suggestions
 
 ## Disclaimer
-The whole case, as well as the database and questions are authored by Danny in his [#8weeksqlchallenge](https://8weeksqlchallenge.com/). This is [Case Study #1 - Danny's Diner](https://8weeksqlchallenge.com/case-study-1/)
+The whole case, as well as the database and questions are authored by Danny in his [#8weeksqlchallenge](https://8weeksqlchallenge.com/). This is [Case Study #2 - Pizza Runner](https://8weeksqlchallenge.com/case-study-2/)
