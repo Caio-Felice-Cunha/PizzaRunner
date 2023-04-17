@@ -25,6 +25,17 @@ This case study has LOTS of questions - they are broken up by area of focus incl
 
 ## Solution Strategy
 We used MySQL as database management system to solve this problem.
+* In order to anwer the business problems questions, it was necessary to apply:
+  * SELECT;
+  * SHERE;
+  * GROUP BY & ORDER BY;
+  * Common table expression (CTE);
+  * JOINS;
+  * Data label;
+  * Data manipulation;
+  * Cleaning data;
+  * Date Manpulation / Time Series;
+  * Subquery.
 
 ## Insights
 For more Data Insights, Business Results, check the scripts above
