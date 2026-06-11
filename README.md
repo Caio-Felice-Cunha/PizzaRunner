@@ -1,5 +1,5 @@
 # Pizza Runner
-Analyzing Danny's Pizza Runnes with MySQL
+Analyzing Danny's Pizza Runner with MySQL
 
 <img align="center" src=https://user-images.githubusercontent.com/111542025/230740791-e7daec80-24e3-4aa1-b12e-7cf34444069f.png>
 
