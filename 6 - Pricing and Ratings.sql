@@ -22,16 +22,22 @@ Pizza Runner made 138$ so far
 */
 
 -- 2) What if there was an additional $1 charge for any pizza extras?
+-- The extras must be counted for DELIVERED pizzas only, so the CTE joins runner_orders
+-- and keeps cancellation IS NULL. Without this, cancelled order 9 (extras '1, 5') is
+-- counted and the total is overstated.
 WITH IngredientsCount AS(
-	SELECT 
+	SELECT
 		TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(customer_orders.extras, ',', n), ',', -1)) AS Toppings,
 		COUNT(*) AS ExtraPrice
 	FROM
 		customer_orders
+			INNER JOIN
+		runner_orders ON customer_orders.order_id = runner_orders.order_id
 			CROSS JOIN
 		(SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION SELECT 12) numbers
 	WHERE
-		n <= LENGTH(customer_orders.extras) - LENGTH(REPLACE(customer_orders.extras, ',', '')) + 1
+		runner_orders.cancellation IS NULL
+		AND n <= LENGTH(customer_orders.extras) - LENGTH(REPLACE(customer_orders.extras, ',', '')) + 1
 	GROUP BY
 		TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(customer_orders.extras, ',', n), ',', -1))
 	ORDER BY
@@ -59,13 +65,15 @@ WHERE
 
 /*
 ############ Answer ############
-Pizza Runner made 138$ with the pizzas, and 6$ with extras. Total of 144$
+Pizza Runner made $138 with the pizzas, and $4 with extras (delivered orders only). Total of $142.
+The delivered extras are order 5 ('1'), order 7 ('1'), and order 10 ('1, 4') = 4 extras.
+The earlier figure of $6 / $144 wrongly included cancelled order 9's two extras.
 ############ Answer ############
 */
 
 -- 3) The Pizza Runner team now wants to add an additional ratings system that allows customers to rate their runner, how would you design an additional table for this new dataset - generate a schema for this new table and insert your own data for ratings for each successful customer order between 1 to 5.
 
-DROP TABLE IF EXISTS runner_rating;
+DROP TABLE IF EXISTS runner_client_rating;
 
 CREATE TABLE runner_client_rating (
     order_id INTEGER,
@@ -116,7 +124,7 @@ GROUP BY
     customer_orders.order_time, 
     runner_orders.pickup_time;
 
--- If a Meat Lovers pizza was $12 and Vegetarian $10 fixed prices with no cost for extras and each runner is paid $0.30 per kilometre traveled - how much money does Pizza Runner have left over after these deliveries?
+-- 5) If a Meat Lovers pizza was $12 and Vegetarian $10 fixed prices with no cost for extras and each runner is paid $0.30 per kilometre traveled - how much money does Pizza Runner have left over after these deliveries?
 WITH OrderPrice AS(
 	SELECT
 		customer_orders.order_id,

@@ -1,18 +1,24 @@
 ##################### Runner and Customer Experience ##################### 
 -- 1) How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
-SELECT 
-	WEEK(registration_date) Weeks,
+-- WEEK() uses Sunday-based calendar weeks, which splits the Jan 1 and Jan 3 signups
+-- into different buckets. The question defines the week as a 7-day period from 2021-01-01,
+-- so we bucket by 7-day offset from that anchor instead.
+SELECT
+	FLOOR(DATEDIFF(registration_date, '2021-01-01') / 7) + 1 AS Weeks,
     COUNT(runner_id) Registrations
 FROM
     runners
 GROUP BY
+	Weeks
+ORDER BY
 	Weeks;
 /*
 ############ Answer ############
 Weeks, Registrations
-0 			1
 1 			2
-2			1
+2 			1
+3			1
+(Week 1 = Jan 1 to Jan 7 gets both the Jan 1 and Jan 3 signups.)
 ############ Answer ############
 */
 
@@ -40,10 +46,13 @@ Average time for runner_id 3 is 10 minutes
 */
 
 -- 3) Is there any relationship between the number of pizzas and how long the order takes to prepare?
+-- Prep time is a single value per order (order_time to pickup_time). Because customer_orders
+-- has one row per pizza, SUM() would add the same prep time once per pizza and inflate it.
+-- We use MAX() (all pizza rows in an order share the same prep time) to get the true per-order value.
 SELECT
 	customer_orders.order_id,
     COUNT(customer_orders.pizza_id) NumberOfPizzas,
-    SUM(TIMESTAMPDIFF(MINUTE, customer_orders.order_time, runner_orders.pickup_time)) as PrepareTime_min
+    MAX(TIMESTAMPDIFF(MINUTE, customer_orders.order_time, runner_orders.pickup_time)) as PrepareTime_min
 FROM
 	customer_orders
 		INNER JOIN
@@ -52,13 +61,24 @@ GROUP BY
 	customer_orders.order_id
 HAVING
 	PrepareTime_min IS NOT NULL
-ORDER BY 
+ORDER BY
 	NumberOfPizzas desc;
 /*
 ############ Answer ############
-We can see that there is a certain relationship between the number of pizzas and how long it takes for the order to be prepared.
-It seems that the greater the number of pizzas per order, the longer it takes to prepare.
-We see that to prepare a pizza, it takes 10 minutes, but for 2 pizzas it is not 20 minutes, but between 30 and 42 minutes. When there were 3 pizzas in one order, we have that the preparation time reaches 87 minutes.
+order_id, NumberOfPizzas, PrepareTime_min
+4			3				29
+3			2				21
+10			2				15
+1			1				10
+2			1				10
+5			1				10
+7			1				10
+8			1				20
+There is a relationship: larger orders take longer to prepare.
+Single-pizza orders take about 10 minutes (order 8 is an outlier at 20).
+Two-pizza orders take roughly 15 to 21 minutes, and the one three-pizza order took 29 minutes.
+The previous claim of 87 minutes for 3 pizzas was a bug: it summed the single 29-minute prep
+time once per pizza (29 x 3 = 87), not real elapsed time.
 ############ Answer ############
 */
 

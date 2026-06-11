@@ -109,58 +109,68 @@ Maximum pizzas delivered in one order was 3 pizzas, for customer_id 103 (order 4
 */
 
 -- 7) For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
--- 7.1) Orders that had at least 1 change
-SELECT 
-    customer_id,
-    COUNT(pizza_id) ChangedOrders
+-- The question is about DELIVERED pizzas, so we must join runner_orders and keep cancellation IS NULL.
+-- 7.1) Delivered pizzas that had at least 1 change (an exclusion OR an extra)
+SELECT
+    customer_orders.customer_id,
+    COUNT(customer_orders.pizza_id) ChangedOrders
 FROM
     customer_orders
+		INNER JOIN
+	runner_orders ON customer_orders.order_id = runner_orders.order_id
 WHERE
-	exclusions IS NOT NULL OR  extras IS NOT NULL
-group by customer_id;
+	runner_orders.cancellation IS NULL
+	AND (customer_orders.exclusions IS NOT NULL OR customer_orders.extras IS NOT NULL)
+group by customer_orders.customer_id;
 /*
 ############ Answer ############
-The customer_id 103 had 4 orders changed
-The customer_id 104 had 2 orders changed
-The customer_id 105 had 1 orders changed
-
+The customer_id 103 had 3 pizzas changed
+The customer_id 104 had 2 pizzas changed
+The customer_id 105 had 1 pizza changed
+(Cancelled order 9 is excluded, so 103 is 3 not 4.)
 ############ Answer ############
 */
 
--- 7.2) Orders that had no changes
-SELECT 
-    customer_id,
-    COUNT(pizza_id) NoChangedOrders
+-- 7.2) Delivered pizzas that had no changes (no exclusion AND no extra)
+SELECT
+    customer_orders.customer_id,
+    COUNT(customer_orders.pizza_id) NoChangedOrders
 FROM
     customer_orders
+		INNER JOIN
+	runner_orders ON customer_orders.order_id = runner_orders.order_id
 WHERE
-	exclusions IS NULL OR extras IS NULL
-group by 
-	customer_id;
+	runner_orders.cancellation IS NULL
+	AND customer_orders.exclusions IS NULL AND customer_orders.extras IS NULL
+group by
+	customer_orders.customer_id;
 /*
 ############ Answer ############
-The customer_id 101 had 3 orders not changed
-The customer_id 102 had 3 orders not changed
-The customer_id 103 had 3 orders not changed
-The customer_id 104 had 2 orders not changed
-The customer_id 105 had 1 order not changed
+The customer_id 101 had 2 pizzas not changed
+The customer_id 102 had 3 pizzas not changed
+The customer_id 104 had 1 pizza not changed
+(103 and 105 have 0 unchanged delivered pizzas, so they do not appear.)
 ############ Answer ############
 */
 
 -- 8) How many pizzas were delivered that had both exclusions and extras?
-SELECT 
+SELECT
     pizza_names.pizza_name,
     COUNT(customer_orders.pizza_id) NumberOfPizzas
 FROM
     customer_orders
 		LEFT JOIN
 	pizza_names ON customer_orders.pizza_id = pizza_names.pizza_id
+		INNER JOIN
+	runner_orders ON customer_orders.order_id = runner_orders.order_id
 WHERE
-	exclusions IS NOT NULL AND extras IS NOT NULL
+	runner_orders.cancellation IS NULL
+	AND customer_orders.exclusions IS NOT NULL AND customer_orders.extras IS NOT NULL
 GROUP BY pizza_names.pizza_name;
 /*
 ############ Answer ############
-Total of 2 pizzas were delivered that had changes for both exclusion and extras. Both were meatlovers.
+Total of 1 pizza was delivered that had changes for both exclusion and extras (order 10, a Meatlovers).
+The earlier count of 2 wrongly included cancelled order 9, which was never delivered.
 ############ Answer ############
 */
 
@@ -200,13 +210,15 @@ FROM
 	customer_orders
 GROUP BY 
 	WeekDay
-ORDER BY 
+ORDER BY
 	OrderedPizzas DESC;
 /*
 ############ Answer ############
-
-
-
-
+WeekDay, OrderedPizzas, VolumeOrderedPizzas
+Wednesday	5			35.71
+Saturday	5			35.71
+Thursday	3			21.43
+Friday		1			7.14
+Wednesday and Saturday tie for the busiest day with 5 pizzas each (the order_time data is in January 2020).
 ############ Answer ############
 */
